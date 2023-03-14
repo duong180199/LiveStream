@@ -20,14 +20,11 @@ class MainActivity : AppCompatActivity() {
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-//
-//        binding.video.setVideoPath("https://videocdn.bodybuilding.com/video/mp4/62000/62792m.mp4")
-//        binding.video.setOnPreparedListener { binding.video.start() }
 
         getData()
-        val manager: RecyclerView.LayoutManager = LinearLayoutManager(this)
+        val layoutManager: LinearLayoutManager = LinearLayoutManager(this)
         adapter = CommentAdapter(list)
-        binding.recycler.layoutManager = manager
+        binding.recycler.layoutManager = layoutManager
         binding.recycler.adapter = adapter
 
         val scroll = object : RecyclerView.OnScrollListener() {
@@ -44,18 +41,9 @@ class MainActivity : AppCompatActivity() {
             }
         }
         binding.recycler.addOnScrollListener(scroll)
-
-//        binding.root.setOnScrollChangeListener { v, scrollX, scrollY, oldScrollX, oldScrollY ->
-//            if (scrollY == v.height) {
-//                count++;
-//                if (count < 20) {
-//                    getData();
-//                }
-//            }
-//        }
     }
 
-    private fun getData() {
+    fun getData() {
         list.add("1")
         list.add("2")
         list.add("3")
