@@ -11,7 +11,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.only.kotlinapp.databinding.FragmentLivestreamBinding
 
-class FragmentLiveStream: Fragment() {
+class FragmentLiveStream: BaseFragment() {
     private lateinit var binding: FragmentLivestreamBinding
 
     private lateinit var adapter: CommentAdapter
@@ -29,6 +29,9 @@ class FragmentLiveStream: Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        binding.video.setVideoPath("https://www.pexels.com/video/an-elegant-set-up-of-fruits-and-glasses-of-wine-7681587/")
+        binding.video.start()
 
         getData()
         val layoutManager: LinearLayoutManager = LinearLayoutManager(context)
