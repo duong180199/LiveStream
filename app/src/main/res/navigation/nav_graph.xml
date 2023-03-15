@@ -10,10 +10,17 @@
         <action
             android:id="@+id/action_fragmentHome_to_fragmentLiveStream"
             app:destination="@id/fragmentLiveStream" />
+        <action
+            android:id="@+id/action_fragmentHome_to_fragmentCamera"
+            app:destination="@id/fragmentCamera" />
     </fragment>
 
     <fragment
         android:id="@+id/fragmentLiveStream"
         android:name="com.only.kotlinapp.FragmentLiveStream"
         android:label="FragmentLiveStream" />
+    <fragment
+        android:id="@+id/fragmentCamera"
+        android:name="com.only.kotlinapp.FragmentCamera"
+        android:label="FragmentCamera" />
 </navigation>
