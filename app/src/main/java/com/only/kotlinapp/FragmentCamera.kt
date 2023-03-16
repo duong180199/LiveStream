@@ -9,9 +9,11 @@ import android.hardware.camera2.CameraManager
 import android.hardware.camera2.CaptureRequest
 import android.os.Bundle
 import android.os.Handler
-import android.os.Looper
+import android.os.HandlerThread
+import android.util.Log
 import android.view.*
 import com.only.kotlinapp.databinding.FragmentCameraBinding
+import java.util.concurrent.Semaphore
 
 class FragmentCamera : BaseFragment() {
 
@@ -24,7 +26,18 @@ class FragmentCamera : BaseFragment() {
     private lateinit var captureRequest: CaptureRequest
 
     private lateinit var handler: Handler
+    private lateinit var handlerThread: HandlerThread
 
+    private var semaphore=  Semaphore(1)
+
+    private var cameraId = "0"
+
+    companion object {
+        var CAMERA_FRONT = "1"
+        var CAMERA_BACK = "0"
+    }
+
+    private var index: Int = 0
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -40,13 +53,18 @@ class FragmentCamera : BaseFragment() {
 //        activity?.startActivityFromFragment(this, cameraIntent, cameraRequest)
 
         cameraManager = activity?.getSystemService(Context.CAMERA_SERVICE) as CameraManager
-        handler = Handler(Looper.getMainLooper());
+
+        handlerThread = HandlerThread("Wibu never die")
+        handlerThread.start()
+        handler = Handler(handlerThread.looper)
+
         binding.texture.surfaceTextureListener = object : TextureView.SurfaceTextureListener {
             override fun onSurfaceTextureAvailable(
                 surface: SurfaceTexture,
                 width: Int,
                 height: Int
             ) {
+                openCamera(cameraId)
             }
 
             override fun onSurfaceTextureSizeChanged(
@@ -62,20 +80,23 @@ class FragmentCamera : BaseFragment() {
 
             override fun onSurfaceTextureUpdated(surface: SurfaceTexture) {
             }
+        }
 
-
+        binding.btnSwap.setOnClickListener {
+            switch()
         }
     }
 
     @SuppressLint("MissingPermission")
-    private fun openCamera() {
+    private fun openCamera(cameraId: String) {
         cameraManager.openCamera(
-            cameraManager.cameraIdList[0],
+            cameraId,
             object : CameraDevice.StateCallback() {
                 override fun onOpened(camera: CameraDevice) {
                     cameraDevice = camera
-                    var request = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW)
-                    var surface = Surface(binding.texture.surfaceTexture)
+                    semaphore.release()
+                    val request = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW)
+                    val surface = Surface(binding.texture.surfaceTexture)
                     request.addTarget(surface)
 
                     cameraDevice.createCaptureSession(
@@ -86,7 +107,7 @@ class FragmentCamera : BaseFragment() {
                                 cameraCaptureSession.setRepeatingRequest(
                                     request.build(),
                                     null,
-                                    null
+                                    handler
                                 )
                             }
 
@@ -99,12 +120,38 @@ class FragmentCamera : BaseFragment() {
                 }
 
                 override fun onDisconnected(camera: CameraDevice) {
+                    semaphore.release()
+                    cameraDevice.close()
                 }
 
                 override fun onError(camera: CameraDevice, error: Int) {
+                    semaphore.release()
+                    cameraDevice.close()
+                    val errorMsg = when (error) {
+                        ERROR_CAMERA_DEVICE -> "Fatal (device)"
+                        ERROR_CAMERA_DISABLED -> "Device policy"
+                        ERROR_CAMERA_IN_USE -> "Camera in use"
+                        ERROR_CAMERA_SERVICE -> "Fatal (service)"
+                        ERROR_MAX_CAMERAS_IN_USE -> "Maximum cameras in use"
+                        else -> "Unknown"
+                    }
+                    Log.e(
+                        FragmentCamera::class.simpleName,
+                        "Error when trying to connect camera $errorMsg"
+                    )
                 }
             },
             handler
         )
+    }
+
+    private fun switch() {
+        if (cameraId == CAMERA_FRONT) {
+            cameraId = CAMERA_BACK
+        } else cameraId = CAMERA_FRONT
+
+        cameraCaptureSession.close()
+        cameraDevice.close()
+        openCamera(cameraId)
     }
 }
